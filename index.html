@@ -13,7 +13,7 @@
 		<link href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i" rel="stylesheet">
         
         <!-- title of site -->
-        <title>Furniture</title>
+        <title>MobiCare</title>
 
         <!-- For favicon png -->
 		<link rel="shortcut icon" type="image/icon" href="{% static '/logo/favicon.png' %}">
@@ -228,11 +228,29 @@
 				                          
 				                        </ul>-->
 				                    </li><!--/.dropdown-->
-									<li>
-										<a href="#loginModal" data-toggle="modal"><button class="btn btn-primary btn-login">Login</button></a>
-									</li>
+									
+					
+										<li>
+											<a href="{% url 'login' %}" data-toggle="modal"><button class="btn btn-primary btn-login">Login</button></a>
+										</li>
+									
 				                </ul>
-				            </div><!--/.attr-nav-->
+				            </div>
+							<div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+								<div class="modal-dialog" role="document">
+									<div class="modal-content">
+										<div class="modal-header">
+											<h5 class="modal-title" id="loginModalLabel">Login</h5>
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+												<span aria-hidden="true">&times;</span>
+											</button>
+										</div>
+										<div class="modal-body">
+											<!-- Login form will be loaded here -->
+										</div>
+									</div>
+								</div>
+							</div><!--/.attr-nav-->
 				            <!-- End Atribute Navigation -->
 
 				            <!-- Start Header Navigation -->
@@ -255,7 +273,9 @@
 				                    <li class="scroll"><a href="#feature">Services</a></li>
 				                    
 				                    <li class="scroll"><a href="#newsletter">contact</a></li>
-									
+									{% if request.user.is_authenticated %}
+									<li class="scroll"><a href="{% url 'logout' %}">Logout</a></li>
+									{% endif %}
 				                </ul><!--/.nav -->
 				            </div><!-- /.navbar-collapse -->
 				        </div><!--/.container-->
@@ -768,7 +788,7 @@
         
         <!--Custom JS-->
         <script src="{% static '/js/custom.js' %}"></script>
-        
+		
     </body>
 	
 </html>
