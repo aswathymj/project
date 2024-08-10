@@ -2,21 +2,37 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from .models import CustomUser
 from django.contrib.auth.decorators import login_required
-from .models import Category,SubCategory,Product
+from .models import Category,SubCategory,Product,Cart,Payment
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
+import paypalrestsdk
+from django.conf import settings
 # Create your views here.
 def index(request):
     return render(request, 'index.html')
 
 def admin_view(request):
-    return render(request, 'admin_dash.html')
+    category_count = Category.objects.count()
+    product_count = Product.objects.count()
+    
+
+    context = {
+        'category_count': category_count,
+        'product_count': product_count,
+        
+        'username': request.user.username,
+    }
+
+    return render(request, 'admin_dash.html', context)
+   
 
 @login_required
 def user_view(request):
-    return render(request, 'user.html')
+    return render(request, 'user.html', {'user': request.user})
 @login_required
 def technician_view(request):
     return render(request, 'index.html')
@@ -259,5 +275,147 @@ def get_subcategories(request):
 
 def category_products(request, category_id):
     category = get_object_or_404(Category, id=category_id)
-    products = Product.objects.filter(subcategory__category=category)
-    return render(request, 'category_products.html', {'category': category, 'products': products})
+    products = Product.objects.filter(category=category)
+    context = {
+        'category': category,
+        'products': products,
+    }
+    return render(request, 'category_products.html', context)
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    # Exclude the current product from the list
+    related_products = Product.objects.exclude(id=product_id)
+    context = {
+        'product': product,
+        'related_products': related_products
+    }
+    return render(request, 'product_detail.html', context)
+@login_required
+def add_to_cart(request, product_id):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, id=product_id)
+        quantity = int(request.POST.get('quantity', 1))
+        
+
+        # Check if the cart item already exists
+        cart_item, created = Cart.objects.get_or_create(
+            user=request.user,
+            product=product,
+            defaults={'quantity': quantity}
+        )
+
+        if not created:
+            # If the item already exists, update the quantity
+            cart_item.quantity += quantity
+            cart_item.save()
+
+        return redirect('view_cart')
+@login_required
+def view_cart(request):
+    cart_items = Cart.objects.filter(user=request.user)
+    grand_total = sum(item.product.price * item.quantity for item in cart_items)
+    return render(request, 'view_cart.html', {
+        'cart_items': cart_items,
+        'grand_total': grand_total,
+    })
+def update_cart(request, item_id):
+    if request.method == 'POST':
+        quantity = int(request.POST.get('quantity', 1))
+        cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+        cart_item.quantity = quantity
+        cart_item.save()
+    return redirect('view_cart')
+
+def remove_from_cart(request, item_id):
+    cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+    cart_item.delete()
+    return redirect('view_cart')
+@login_required
+def buy_now(request, cart_id):
+    cart_item = get_object_or_404(Cart, id=cart_id)
+    amount = cart_item.product.price * cart_item.quantity
+    payment = Payment.objects.create(
+        cart=cart_item,
+        amount=amount,
+        status='Pending'
+    )
+    # Redirect to a page that displays the product details from the payment
+    return redirect('payment_detail', payment_id=payment.id)
+
+@login_required
+def payment_detail(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    return render(request, 'payment_detail.html', {'payment': payment})
+@csrf_exempt
+@login_required
+def update_user_details(request):
+    if request.method == 'POST':
+        user = CustomUser.objects.get(pk=request.user.pk)
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        user.phone = request.POST.get('phone', user.phone)
+        user.address = request.POST.get('address', user.address)
+        user.pincode = request.POST.get('pincode', user.pincode)
+        user.save()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)
+
+paypalrestsdk.configure({
+    "mode": settings.PAYPAL_MODE,  # sandbox or live
+    "client_id": settings.PAYPAL_CLIENT_ID,
+    "client_secret": settings.PAYPAL_CLIENT_SECRET,
+})
+
+def create_paypal_payment(request):
+    if request.method == 'POST':
+        payment = paypalrestsdk.Payment({
+            "intent": "sale",
+            "payer": {
+                "payment_method": "paypal"
+            },
+            "redirect_urls": {
+                "return_url": request.build_absolute_uri(reverse('paypal_execute')),
+                "cancel_url": request.build_absolute_uri(reverse('payment_cancelled'))
+            },
+            "transactions": [{
+                "item_list": {
+                    "items": [{
+                        "name": "Item Name",
+                        "sku": "item",
+                        "price": "10.00",
+                        "currency": "USD",
+                        "quantity": 1
+                    }]
+                },
+                "amount": {
+                    "total": "10.00",
+                    "currency": "USD"
+                },
+                "description": "This is the payment transaction description."
+            }]
+        })
+
+        if payment.create():
+            for link in payment.links:
+                if link.rel == "approval_url":
+                    approval_url = str(link.href)
+                    return redirect(approval_url)
+        else:
+            return render(request, 'payment_error.html', {'error': payment.error})
+    return redirect('index')
+
+def execute_paypal_payment(request):
+    payment_id = request.GET.get('paymentId')
+    payer_id = request.GET.get('PayerID')
+
+    payment = paypalrestsdk.Payment.find(payment_id)
+
+    if payment.execute({"payer_id": payer_id}):
+        return render(request, 'payment_success.html')
+    else:
+        return render(request, 'payment_error.html', {'error': payment.error})
+
+def payment_cancelled(request):
+    return render(request, 'payment_cancelled.html')
+

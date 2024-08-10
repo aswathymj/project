@@ -1,7 +1,7 @@
 from django.urls import path, include
 from django.contrib import admin
-from myapp.views import user_login, register, index, admin_view, technician_view, user_view, logout_view, add_category, accessories, view_category, delete_category, add_subcategory, view_subcategory,edit_category,edit_subcategory,delete_subcategory,add_product,view_product,edit_product,delete_product,get_subcategories,category_products
-
+from myapp.views import user_login, register, index, admin_view, technician_view, user_view, logout_view, add_category, accessories, view_category, delete_category, add_subcategory, view_subcategory,edit_category,edit_subcategory,delete_subcategory,add_product,view_product,edit_product,delete_product,get_subcategories,product_detail,category_products,add_to_cart,view_cart,update_cart,remove_from_cart,buy_now,payment_detail,update_user_details,create_paypal_payment, execute_paypal_payment, payment_cancelled
+from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('', index, name='index'),
     path('login/', user_login, name='login'),
@@ -26,6 +26,22 @@ urlpatterns = [
     path('products/edit/<int:product_id>/', edit_product, name='edit_product'),
     path('products/delete/<int:product_id>/', delete_product, name='delete_product'),
     path('get-subcategories/', get_subcategories, name='get_subcategories'),
-     path('categories/<int:category_id>/', category_products, name='category_products'),
-     
+       path('product/<int:product_id>/', product_detail, name='product_detail'),
+      path('category/<int:category_id>/', category_products, name='category_products'),
+       path('add-to-cart/<int:product_id>/',add_to_cart, name='add_to_cart'),
+        path('cart/', view_cart, name='view_cart'),
+         path('cart/update/<int:item_id>/',update_cart, name='update_cart'),
+    path('cart/remove/<int:item_id>/', remove_from_cart, name='remove_from_cart'),
+     path('buy_now/<int:cart_id>/', buy_now, name='buy_now'),
+    path('payment_detail/<int:payment_id>/',payment_detail, name='payment_detail'),
+     path('update_user_details/', update_user_details, name='update_user_details'),
+     path('create_paypal_payment/', create_paypal_payment, name='create_paypal_payment'),
+    path('paypal_execute/', execute_paypal_payment, name='paypal_execute'),
+    path('payment_cancelled/', payment_cancelled, name='payment_cancelled'),
+     # Password reset URLs
+    path('password_reset/', auth_views.PasswordResetView.as_view(template_name='password_reset.html'), name='password_reset'),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='password_reset_done.html'), name='password_reset_done'),
+    path('password_reset/<uidb64>/token/', auth_views.PasswordResetConfirmView.as_view(template_name='password_reset_confirm.html'), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_complete.html'), name='password_reset_complete'),
+    
 ]
