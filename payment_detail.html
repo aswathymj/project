@@ -1,0 +1,223 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Details</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f1f3f6;
+        margin: 0;
+        padding: 0;
+    }
+
+    .navbar {
+        background-color: white;
+        border-bottom: 2px solid #0056b3;
+        padding: 15px 20px;
+    }
+
+    .navbar-brand img {
+        height: 51px;
+        width: auto;
+    }
+
+    .navbar-nav {
+        display: flex;
+        align-items: center;
+    }
+
+    .navbar-nav .nav-item {
+        margin: 0 20px;
+    }
+
+    .navbar-nav .nav-link {
+        color: #0056b3;
+        font-weight: bold;
+        padding: 10px 0;
+    }
+
+    .navbar-nav .nav-link:hover {
+        color: #007bff;
+        text-decoration: underline;
+    }
+
+    .navbar .search-bar {
+        border-radius: 20px;
+        padding: 5px 15px;
+        background: #fff;
+        color: #007bff;
+        margin-left: auto;
+        width: 250px;
+    }
+
+    .navbar .cart-icon {
+        position: relative;
+    }
+
+    .navbar .cart-icon .badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #ff0000;
+        color: #fff;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 12px;
+    }
+</style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <img src="{% static 'images/logo.png' %}" alt="MobiCare Logo">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{% url 'index' %}">Home</a>
+                </li>
+                <li class="nav-item active">
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'accessories' %}">Accessories</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#feature">Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#newsletter">Contact</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'view_cart' %}">
+                        <i class="fa fa-shopping-bag"></i>
+                        <span class="badge">{{ cart_item_count }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fa fa-user"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Payment Details</h1>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ payment.cart.product.name }}</h5>
+                <p class="card-text">Price: Rs {{ payment.cart.product.price }}</p>
+                <p class="card-text">Quantity: {{ payment.cart.quantity }}</p>
+                <p class="card-text">Total Amount: Rs {{ payment.amount }}</p>
+                <p class="card-text">Status: {{ payment.status }}</p>
+                <hr>
+                <h5 class="card-title">User Details</h5>
+                <p class="card-text">Name: {{ payment.cart.user.first_name }} {{ payment.cart.user.last_name }}</p>
+                <p class="card-text">Address: {{ payment.cart.user.address }}</p>
+                <p class="card-text">Phone Number: {{ payment.cart.user.phone }}</p>
+                <p class="card-text">PIN Number: {{ payment.cart.user.pincode }}</p>
+                <button class="btn btn-success mt-3" data-toggle="modal" data-target="#updateModal">Update User Details</button>
+            </div>
+        </div>
+        <a href="{% url 'user_view' %}" class="btn btn-primary mt-3">Return to Home</a>
+        <form action="{% url 'create_paypal_payment' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Proceed to Pay with PayPal</button>
+        </form>
+    
+
+    </div>
+
+    <!-- Modal for updating user details -->
+    <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateModalLabel">Update User Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" class="form-control" id="first_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" class="form-control" id="last_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" class="form-control" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" class="form-control" id="address">
+                    </div>
+                    <div class="form-group">
+                        <label for="pincode">Pincode</label>
+                        <input type="text" class="form-control" id="pincode">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveChanges">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById('saveChanges').addEventListener('click', function() {
+            const data = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                pincode: document.getElementById('pincode').value
+            };
+
+            fetch('{% url "update_user_details" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('User details updated successfully!');
+                    window.location.reload(); // Reload the page to reflect changes
+                } else {
+                    alert('An error occurred while updating user details.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
