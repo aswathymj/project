@@ -1,0 +1,252 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Details</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f1f3f6;
+    }
+
+    .navbar {
+        background-color: #ffffff;
+        border-bottom: 2px solid #0056b3;
+    }
+
+    .navbar-brand img {
+        height: 52px;
+        width: auto;
+    }
+
+    .navbar-nav .nav-link {
+        color: #0056b3;
+        font-weight: bold;
+    }
+
+    .navbar-nav .nav-link:hover {
+        color: #007bff;
+        text-decoration: underline;
+    }
+
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .btn-custom {
+        background-color: #0056b3;
+        color: #ffffff;
+        border-radius: 20px;
+    }
+
+    .btn-custom:hover {
+        background-color: #004494;
+        color: #ffffff;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #e9ecef;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .footer {
+        background-color: #0056b3;
+        color: #ffffff;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .navbar-nav .nav-item {
+        margin: 0 30px; /* Increased spacing */
+    }
+    .container {
+        font-family: 'Montserrat', sans-serif; /* Attractive font for content */
+    }
+
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <img src="{% static 'images/logo.png' %}" alt="MobiCare Logo">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'index' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'accessories' %}">Accessories</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#feature">Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#newsletter">Contact</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'view_cart' %}">
+                        <i class="fa fa-shopping-bag"></i>
+                        <span class="badge">{{ cart_item_count }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fa fa-door-closed"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h1 class="mb-4">Payment Details</h1>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ payment.cart.product.name }}</h5>
+                <p class="card-text">Price: Rs {{ payment.cart.product.price }}</p>
+                <p class="card-text">Quantity: {{ payment.cart.quantity }}</p>
+                <p class="card-text">Total Amount: Rs {{ payment.amount }}</p>
+                <p class="card-text">Status: <span class="badge badge-info">{{ payment.status }}</span></p>
+                <hr>
+                <h5 class="card-title">User Details</h5>
+                <p class="card-text">Name: {{ payment.cart.user.first_name }} {{ payment.cart.user.last_name }}</p>
+                <p class="card-text">Address: {{ payment.cart.user.address }}</p>
+                <p class="card-text">Phone Number: {{ payment.cart.user.phone }}</p>
+                <p class="card-text">PIN Number: {{ payment.cart.user.pincode }}</p>
+                <button class="btn btn-custom mt-3" data-toggle="modal" data-target="#updateModal">Update User Details</button>
+            </div>
+        </div>
+        <a href="{% url 'user_view' %}" class="btn btn-primary mt-3">Return to Home</a>
+        <button id="rzp-button1" class="btn btn-custom mt-3">Proceed to Pay with Razorpay</button>
+    </div>
+
+    <!-- Modal for updating user details -->
+    <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateModalLabel">Update User Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" class="form-control" id="first_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" class="form-control" id="last_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" class="form-control" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" class="form-control" id="address">
+                    </div>
+                    <div class="form-group">
+                        <label for="pincode">Pincode</label>
+                        <input type="text" class="form-control" id="pincode">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-custom" id="saveChanges">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.getElementById('saveChanges').addEventListener('click', function() {
+            const data = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                pincode: document.getElementById('pincode').value
+            };
+
+            fetch('{% url "update_user_details" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User details updated successfully');
+                    $('#updateModal').modal('hide');
+                } else {
+                    alert('Error updating user details');
+                }
+            });
+        });
+
+        var options = {
+            "key": "{{ razorpay_key }}",
+            "amount": "{{ payment.amount }}", // amount in paise
+            "currency": "INR",
+            "name": "MobiCare",
+            "description": "Payment",
+            "handler": function (response){
+                // Handle successful payment
+            },
+            "prefill": {
+                "name": "{{ payment.cart.user.first_name }} {{ payment.cart.user.last_name }}",
+                "email": "{{ payment.cart.user.email }}",
+                "contact": "{{ payment.cart.user.phone }}"
+            },
+            "theme": {
+                "color": "#0056b3"
+            }
+        };
+        var rzp1 = new Razorpay(options);
+        document.getElementById('rzp-button1').onclick = function(e){
+            rzp1.open();
+            e.preventDefault();
+        }
+    </script>
+</body>
+</html>
